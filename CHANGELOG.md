@@ -2,9 +2,95 @@
 
 ## Unreleased
 
-## v0.14.1
+- Bug fixes:
+  - Fixed deprecated `$Rule` properties. [#491](https://github.com/microsoft/PSRule.Rules.Azure/issues/491)
+
+## v0.16.0-B2009004 (pre-release)
+
+What's changed since v0.15.0:
+
+- New rules:
+  - CDN:
+    - Check CDN endpoint naming requirements. [#486](https://github.com/Microsoft/PSRule.Rules.Azure/issues/486)
+    - Check CDN endpoints use TLS 1.2. [#487](https://github.com/Microsoft/PSRule.Rules.Azure/issues/487)
+- General improvements:
+  - Updated rule content to align with Microsoft Azure Well-Architected Framework pillars. [#481](https://github.com/Microsoft/PSRule.Rules.Azure/issues/481)
+  - Improve output of template processing exceptions. [#484](https://github.com/Microsoft/PSRule.Rules.Azure/issues/484)
+
+## v0.15.0
 
 What's changed since v0.14.1:
+
+- New rules:
+  - All resources:
+    - Check ARM template parameters are used. [#232](https://github.com/Microsoft/PSRule.Rules.Azure/issues/232)
+    - Check ARM template variables are used. [#233](https://github.com/Microsoft/PSRule.Rules.Azure/issues/233)
+    - Check ARM template parameters include a metadata description. [#360](https://github.com/Microsoft/PSRule.Rules.Azure/issues/360)
+    - Check ARM templates define at least one resource. [#359](https://github.com/Microsoft/PSRule.Rules.Azure/issues/359)
+  - Database for MySQL:
+    - Check database servers reject TLS versions older than 1.2. [#469](https://github.com/Microsoft/PSRule.Rules.Azure/issues/469)
+  - Database for PostgreSQL:
+    - Check database servers reject TLS versions older than 1.2. [#470](https://github.com/Microsoft/PSRule.Rules.Azure/issues/470)
+  - SQL Database:
+    - Check database servers reject TLS versions older than 1.2. [#471](https://github.com/Microsoft/PSRule.Rules.Azure/issues/471)
+  - Storage Account:
+    - Check Storage Accounts reject TLS versions older than 1.2. [#455](https://github.com/Microsoft/PSRule.Rules.Azure/issues/455)
+    - Check Storage Accounts only accept authorized requests. [#456](https://github.com/Microsoft/PSRule.Rules.Azure/issues/456)
+- Updated rules:
+  - Azure Kubernetes Service:
+    - Updated `Azure.AKS.Version` to 1.17.9. [#452](https://github.com/Microsoft/PSRule.Rules.Azure/issues/452)
+- Bug fixes:
+  - Fixed export of non-blob Storage Accounts. [#464](https://github.com/Microsoft/PSRule.Rules.Azure/issues/464)
+  - Fixed export of subscription Security Center data based on API version. [#465](https://github.com/Microsoft/PSRule.Rules.Azure/issues/465)
+  - Fixed masking of sharedKey when property does not exist. [#466](https://github.com/Microsoft/PSRule.Rules.Azure/issues/466)
+
+What's changed since pre-release v0.15.0-B2008034:
+
+- No additional changes.
+
+## v0.15.0-B2008043 (pre-release)
+
+What's changed since pre-release v0.15.0-B2008034:
+
+- New rules:
+  - Database for MySQL:
+    - Check database servers reject TLS versions older than 1.2. [#469](https://github.com/Microsoft/PSRule.Rules.Azure/issues/469)
+  - Database for PostgreSQL:
+    - Check database servers reject TLS versions older than 1.2. [#470](https://github.com/Microsoft/PSRule.Rules.Azure/issues/470)
+  - SQL Database:
+    - Check database servers reject TLS versions older than 1.2. [#471](https://github.com/Microsoft/PSRule.Rules.Azure/issues/471)
+- Bug fixes:
+  - Fixed use variables check when no variables are defined. [#462](https://github.com/Microsoft/PSRule.Rules.Azure/issues/462)
+
+## v0.15.0-B2008034 (pre-release)
+
+What's changed since pre-release v0.15.0-B2008026:
+
+- Bug fixes:
+  - Fixed export of non-blob Storage Accounts. [#464](https://github.com/Microsoft/PSRule.Rules.Azure/issues/464)
+  - Fixed export of subscription Security Center data based on API version. [#465](https://github.com/Microsoft/PSRule.Rules.Azure/issues/465)
+  - Fixed masking of sharedKey when property does not exist. [#466](https://github.com/Microsoft/PSRule.Rules.Azure/issues/466)
+
+## v0.15.0-B2008026 (pre-release)
+
+What's changed since v0.14.1:
+
+- New rules:
+  - All resources:
+    - Check ARM template parameters are used. [#232](https://github.com/Microsoft/PSRule.Rules.Azure/issues/232)
+    - Check ARM template variables are used. [#233](https://github.com/Microsoft/PSRule.Rules.Azure/issues/233)
+    - Check ARM template parameters include a metadata description. [#360](https://github.com/Microsoft/PSRule.Rules.Azure/issues/360)
+    - Check ARM templates define at least one resource. [#359](https://github.com/Microsoft/PSRule.Rules.Azure/issues/359)
+  - Storage Account:
+    - Check Storage Accounts reject TLS versions older than 1.2. [#455](https://github.com/Microsoft/PSRule.Rules.Azure/issues/455)
+    - Check Storage Accounts only accept authorized requests. [#456](https://github.com/Microsoft/PSRule.Rules.Azure/issues/456)
+- Updated rules:
+  - Azure Kubernetes Service:
+    - Updated `Azure.AKS.Version` to 1.17.9. [#452](https://github.com/Microsoft/PSRule.Rules.Azure/issues/452)
+
+## v0.14.1
+
+What's changed since v0.14.0:
 
 - Bug fixes:
   - Fixed resource tags rule to exclude diagnostic settings. [#448](https://github.com/Microsoft/PSRule.Rules.Azure/issues/448)
@@ -172,7 +258,7 @@ What's changed since v0.11.0:
   - SQL Database:
     - Check SQL Database uses TDE. [#379](https://github.com/Microsoft/PSRule.Rules.Azure/issues/379)
     - Check SQL Database uses AAD authentication. [#378](https://github.com/Microsoft/PSRule.Rules.Azure/issues/378)
-  - Storage:
+  - Storage Account:
     - Check Storage Account name requirements. [#373](https://github.com/Microsoft/PSRule.Rules.Azure/issues/373)
     - Check Storage blob containers use private access type. [#365](https://github.com/Microsoft/PSRule.Rules.Azure/issues/365)
   - Virtual Network:
@@ -220,7 +306,7 @@ What's changed since pre-release v0.12.0-B2005026:
     - Check Route table name requirements. [#373](https://github.com/Microsoft/PSRule.Rules.Azure/issues/373)
   - SignalR Service:
     - Check SignalR Service name requirements. [#373](https://github.com/Microsoft/PSRule.Rules.Azure/issues/373)
-  - Storage:
+  - Storage Account:
     - Check Storage Account name requirements. [#373](https://github.com/Microsoft/PSRule.Rules.Azure/issues/373)
   - Virtual Network:
     - Check VNET name requirements. [#373](https://github.com/Microsoft/PSRule.Rules.Azure/issues/373)
@@ -235,7 +321,7 @@ What's changed since pre-release v0.12.0-B2005026:
 ## v0.12.0-B2005005 (pre-release)
 
 - New rules:
-  - Storage:
+  - Storage Account:
     - Check Storage blob containers use private access type. [#365](https://github.com/Microsoft/PSRule.Rules.Azure/issues/365)
   - Policy:
     - Check Policy definitions use descriptive fields. [#364](https://github.com/Microsoft/PSRule.Rules.Azure/issues/364)

@@ -26,15 +26,15 @@ Rule 'Azure.AKS.Version' -Type 'Microsoft.ContainerService/managedClusters', 'Mi
             (([Version]$TargetObject.Properties.orchestratorVersion) -ge $minVersion)
         Reason ($LocalizedData.AKSVersion -f $TargetObject.Properties.orchestratorVersion);
     }
-} -Configure @{ Azure_AKSMinimumVersion = '1.17.7' }
+} -Configure @{ Azure_AKSMinimumVersion = '1.17.9' }
 
 # Synopsis: AKS agent pools should run the same Kubernetes version as the cluster
 Rule 'Azure.AKS.PoolVersion' -Type 'Microsoft.ContainerService/managedClusters' -Tag @{ release = 'GA'; ruleSet = '2020_06' } {
     $clusterVersion = $TargetObject.Properties.kubernetesVersion
     foreach ($pool in $TargetObject.Properties.agentPoolProfiles) {
-        $result = $Assert.HasDefaultValue($pool, 'orchestratorVersion', $clusterVersion);
-        $result.AddReason(($LocalizedData.AKSNodePoolVersion -f $pool.name, $pool.orchestratorVersion));
-        $result;
+        $Assert.
+            HasDefaultValue($pool, 'orchestratorVersion', $clusterVersion).
+            Reason($LocalizedData.AKSNodePoolVersion, $pool.name, $pool.orchestratorVersion)
     }
 }
 
@@ -100,7 +100,7 @@ Rule 'Azure.AKS.Name' -Type 'Microsoft.ContainerService/managedClusters' -Tag @{
 
     # Alphanumerics, underscores, and hyphens
     # Start and end with alphanumeric
-    Match 'Name' '^[A-Za-z0-9](-|\w)*[A-Za-z0-9]$'
+    $Assert.Match($TargetObject, 'Name', '^[A-Za-z0-9](-|\w)*[A-Za-z0-9]$')
 }
 
 # Synopsis: Use AKS naming requirements for DNS prefix
@@ -111,7 +111,7 @@ Rule 'Azure.AKS.DNSPrefix' -Type 'Microsoft.ContainerService/managedClusters' -T
 
     # Alphanumerics and hyphens
     # Start and end with alphanumeric
-    Match 'Properties.dnsPrefix' '^[A-Za-z0-9]((-|[A-Za-z0-9]){0,}[A-Za-z0-9]){0,}$'
+    $Assert.Match($TargetObject, 'Properties.dnsPrefix', '^[A-Za-z0-9]((-|[A-Za-z0-9]){0,}[A-Za-z0-9]){0,}$')
 }
 
 # Synopsis: Use a managed identity with AKS clusters
