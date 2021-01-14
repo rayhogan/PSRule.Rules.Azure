@@ -31,6 +31,7 @@ namespace PSRule.Rules.Azure.Data.Template
             new FunctionDescriptor("concat", Concat),
             new FunctionDescriptor("contains", Contains),
             new FunctionDescriptor("createArray", CreateArray),
+            new FunctionDescriptor("createObject", CreateObject),
             new FunctionDescriptor("empty", Empty),
             new FunctionDescriptor("first", First),
             new FunctionDescriptor("intersection", Intersection),
@@ -64,9 +65,11 @@ namespace PSRule.Rules.Azure.Data.Template
             // Logical
             new FunctionDescriptor("and", And),
             new FunctionDescriptor("bool", Bool),
+            new FunctionDescriptor("false", False),
             new FunctionDescriptor("if", If),
             new FunctionDescriptor("not", Not),
             new FunctionDescriptor("or", Or),
+            new FunctionDescriptor("true", True),
 
             // Numeric
             new FunctionDescriptor("add", Add),
@@ -82,6 +85,7 @@ namespace PSRule.Rules.Azure.Data.Template
 
             // Object
             new FunctionDescriptor("json", Json),
+            new FunctionDescriptor("null", Null),
 
             // Resource
             new FunctionDescriptor("extensionResourceId", ExtensionResourceId),
@@ -236,12 +240,35 @@ namespace PSRule.Rules.Azure.Data.Template
             return false;
         }
 
+        /// <summary>
+        /// createArray (arg1, arg2, arg3, ...)
+        /// </summary>
         internal static object CreateArray(TemplateContext context, object[] args)
         {
             if (CountArgs(args) < 1)
                 throw ArgumentsOutOfRange(nameof(CreateArray), args);
 
             return new JArray(args);
+        }
+
+        /// <summary>
+        /// createObject(key1, value1, key2, value2, ...)
+        /// </summary>
+        internal static object CreateObject(TemplateContext context, object[] args)
+        {
+            var argCount = CountArgs(args);
+            if (argCount < 2 || argCount % 2 != 0)
+                throw ArgumentsOutOfRange(nameof(CreateObject), args);
+
+            var properties = new JProperty[argCount / 2];
+            for (var i = 0; i < argCount / 2; i++)
+            {
+                if (!ExpressionHelpers.TryString(args[i * 2], out string name))
+                    throw ArgumentInvalidString(nameof(CreateObject), $"key{i + 1}");
+
+                properties[i] = new JProperty(name, args[i * 2 + 1]);
+            }
+            return new JObject(properties);
         }
 
         internal static object First(TemplateContext context, object[] args)
@@ -304,6 +331,17 @@ namespace PSRule.Rules.Azure.Data.Template
                 throw new ArgumentOutOfRangeException();
 
             return JsonConvert.DeserializeObject(json);
+        }
+
+        /// <summary>
+        /// null()
+        /// </summary>
+        internal static object Null(TemplateContext context, object[] args)
+        {
+            if (CountArgs(args) > 0)
+                throw ArgumentsOutOfRange(nameof(Null), args);
+
+            return null;
         }
 
         internal static object Last(TemplateContext context, object[] args)
@@ -1110,6 +1148,17 @@ namespace PSRule.Rules.Azure.Data.Template
         }
 
         /// <summary>
+        /// false()
+        /// </summary>
+        internal static object False(TemplateContext context, object[] args)
+        {
+            if (CountArgs(args) > 0)
+                throw ArgumentsOutOfRange(nameof(False), args);
+
+            return false;
+        }
+
+        /// <summary>
         /// if(condition, trueValue, falseValue)
         /// </summary>
         internal static object If(TemplateContext context, object[] args)
@@ -1147,6 +1196,17 @@ namespace PSRule.Rules.Azure.Data.Template
                     return true;
             }
             return false;
+        }
+
+        /// <summary>
+        /// true()
+        /// </summary>
+        internal static object True(TemplateContext context, object[] args)
+        {
+            if (CountArgs(args) > 0)
+                throw ArgumentsOutOfRange(nameof(True), args);
+
+            return true;
         }
 
         #endregion Logical

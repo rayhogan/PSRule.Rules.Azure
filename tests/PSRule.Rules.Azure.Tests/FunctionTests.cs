@@ -117,6 +117,31 @@ namespace PSRule.Rules.Azure
 
         [Fact]
         [Trait(TRAIT, TRAIT_ARRAY)]
+        public void CreateObject()
+        {
+            var context = GetContext();
+
+            var actual1 = Functions.CreateObject(context, new object[] {
+                "intProp", 1,
+                "stringProp", "abc",
+                "boolProp", true,
+                "arrayProp", Functions.CreateArray(context, new object[] { "a", "b", "c" }),
+                "objectProp", Functions.CreateObject(context, new object[] { "key1", "value1" }),
+            }) as JObject;
+
+            Assert.Equal(1, actual1["intProp"]);
+            Assert.Equal("abc", actual1["stringProp"]);
+            Assert.Equal(true, actual1["boolProp"]);
+            Assert.Equal("b", actual1["arrayProp"][1]);
+            Assert.Equal("value1", actual1["objectProp"]["key1"]);
+
+            Assert.Throws<ExpressionArgumentException>(() => Functions.CreateObject(context, null));
+            Assert.Throws<ExpressionArgumentException>(() => Functions.CreateObject(context, new object[] { }));
+            Assert.Throws<ExpressionArgumentException>(() => Functions.CreateObject(context, new object[] { "intProp", 1, "stringProp" }));
+        }
+
+        [Fact]
+        [Trait(TRAIT, TRAIT_ARRAY)]
         public void Empty()
         {
             var context = GetContext();
@@ -192,6 +217,19 @@ namespace PSRule.Rules.Azure
 
             Assert.Throws<ArgumentOutOfRangeException>(() => Functions.Json(context, null));
             Assert.Throws<ArgumentOutOfRangeException>(() => Functions.Json(context, new object[] { }));
+        }
+
+        [Fact]
+        [Trait(TRAIT, TRAIT_ARRAY)]
+        public void Null()
+        {
+            var context = GetContext();
+
+            var actual1 = Functions.Null(context, null);
+            var actual2 = Functions.Null(context, new object[] { });
+
+            Assert.Null(actual1);
+            Assert.Null(actual2);
         }
 
         [Fact]
@@ -810,6 +848,20 @@ namespace PSRule.Rules.Azure
 
         [Fact]
         [Trait(TRAIT, TRAIT_LOGICAL)]
+        public void False()
+        {
+            var context = GetContext();
+
+            var actual1 = (bool)Functions.False(context, null);
+            var actual2 = (bool)Functions.False(context, new object[] { });
+            Assert.False(actual1);
+            Assert.False(actual2);
+
+            Assert.Throws<ExpressionArgumentException>(() => Functions.False(context, new object[] { "true" }));
+        }
+
+        [Fact]
+        [Trait(TRAIT, TRAIT_LOGICAL)]
         public void If()
         {
             var context = GetContext();
@@ -844,6 +896,20 @@ namespace PSRule.Rules.Azure
             Assert.True(actual1);
             Assert.True(actual2);
             Assert.False(actual3);
+        }
+
+        [Fact]
+        [Trait(TRAIT, TRAIT_LOGICAL)]
+        public void True()
+        {
+            var context = GetContext();
+
+            var actual1 = (bool)Functions.True(context, null);
+            var actual2 = (bool)Functions.True(context, new object[] { });
+            Assert.True(actual1);
+            Assert.True(actual2);
+
+            Assert.Throws<ExpressionArgumentException>(() => Functions.True(context, new object[] { "true" }));
         }
 
         #endregion Logical
@@ -896,8 +962,6 @@ namespace PSRule.Rules.Azure
             var actual2 = (float)Functions.Float(context, new object[] { "3.0" });
             Assert.Equal(3.0f, actual2);
 
-            // String
-
             Assert.Throws<ExpressionArgumentException>(() => Functions.Float(context, null));
             Assert.Throws<ExpressionArgumentException>(() => Functions.Float(context, new object[] { }));
             Assert.Throws<FormatException>(() => Functions.Float(context, new object[] { "one" }));
@@ -916,8 +980,6 @@ namespace PSRule.Rules.Azure
             // String
             var actual2 = (int)Functions.Int(context, new object[] { "4" });
             Assert.Equal(4, actual2);
-
-            // String
 
             Assert.Throws<ExpressionArgumentException>(() => Functions.Int(context, null));
             Assert.Throws<ExpressionArgumentException>(() => Functions.Int(context, new object[] { }));
