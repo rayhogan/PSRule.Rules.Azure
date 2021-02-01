@@ -26,7 +26,7 @@ Rule 'Azure.AKS.Version' -Type 'Microsoft.ContainerService/managedClusters', 'Mi
             (([Version]$TargetObject.Properties.orchestratorVersion) -ge $minVersion)
         Reason ($LocalizedData.AKSVersion -f $TargetObject.Properties.orchestratorVersion);
     }
-} -Configure @{ Azure_AKSMinimumVersion = '1.19.3' }
+} -Configure @{ Azure_AKSMinimumVersion = '1.19.6' }
 
 # Synopsis: AKS agent pools should run the same Kubernetes version as the cluster
 Rule 'Azure.AKS.PoolVersion' -Type 'Microsoft.ContainerService/managedClusters' -Tag @{ release = 'GA'; ruleSet = '2020_06' } {
@@ -54,15 +54,14 @@ Rule 'Azure.AKS.PoolScaleSet' -Type 'Microsoft.ContainerService/managedClusters'
     if ($PSRule.TargetType -eq 'Microsoft.ContainerService/managedClusters') {
         $TargetObject.Properties.agentPoolProfiles | ForEach-Object {
             if ($_.type -ne 'VirtualMachineScaleSets') {
-                $result = $False
-                $Assert.Fail(($LocalizedData.AKSNodePoolType -f $_.name))
+                $Assert.Fail($LocalizedData.AKSNodePoolType, $_.name)
             }
         }
     }
     elseif ($PSRule.TargetType -eq 'Microsoft.ContainerService/managedClusters/agentPools') {
         $result = $TargetObject.Properties.type -eq 'VirtualMachineScaleSets'
         if (!$result) {
-            $Assert.Fail(($LocalizedData.AKSNodePoolType -f $TargetObject.name))
+            $Assert.Fail($LocalizedData.AKSNodePoolType, $TargetObject.name)
         }
     }
     return $result
@@ -74,7 +73,7 @@ Rule 'Azure.AKS.NodeMinPods' -Type 'Microsoft.ContainerService/managedClusters',
     if ($PSRule.TargetType -eq 'Microsoft.ContainerService/managedClusters') {
         $agentPools = @($TargetObject.Properties.agentPoolProfiles);
         if ($agentPools.Length -eq 0) {
-            $True;
+            return $Assert.Pass();
         }
     }
     elseif ($PSRule.TargetType -eq 'Microsoft.ContainerService/managedClusters/agentPools') {
@@ -90,12 +89,12 @@ Rule 'Azure.AKS.Name' -Type 'Microsoft.ContainerService/managedClusters' -Tag @{
     # https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftcontainerservice
 
     # Between 1 and 63 characters long
-    $Assert.GreaterOrEqual($TargetObject, 'Name', 1)
-    $Assert.LessOrEqual($TargetObject, 'Name', 63)
+    $Assert.GreaterOrEqual($PSRule, 'TargetName', 1)
+    $Assert.LessOrEqual($PSRule, 'TargetName', 63)
 
     # Alphanumerics, underscores, and hyphens
     # Start and end with alphanumeric
-    $Assert.Match($TargetObject, 'Name', '^[A-Za-z0-9](-|\w)*[A-Za-z0-9]$')
+    $Assert.Match($PSRule, 'TargetName', '^[A-Za-z0-9](-|\w)*[A-Za-z0-9]$')
 }
 
 # Synopsis: Use AKS naming requirements for DNS prefix

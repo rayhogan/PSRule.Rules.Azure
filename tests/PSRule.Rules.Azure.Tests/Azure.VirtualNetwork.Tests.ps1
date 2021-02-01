@@ -6,9 +6,7 @@
 #
 
 [CmdletBinding()]
-param (
-
-)
+param ()
 
 # Setup error handling
 $ErrorActionPreference = 'Stop';
@@ -230,7 +228,7 @@ Describe 'Azure.VNET' -Tag 'Network', 'VNET' {
         $templatePath = Join-Path -Path $here -ChildPath 'Resources.Template.json';
         $parameterPath = Join-Path -Path $here -ChildPath 'Resources.Parameters.json';
         $outputFile = Join-Path -Path $rootPath -ChildPath out/tests/Resources.VirtualNetwork.json;
-        Export-AzTemplateRuleData -TemplateFile $templatePath -ParameterFile $parameterPath -OutputPath $outputFile;
+        Export-AzRuleTemplateData -TemplateFile $templatePath -ParameterFile $parameterPath -OutputPath $outputFile;
         $result = Invoke-PSRule -Module PSRule.Rules.Azure -InputPath $outputFile -Outcome All -WarningAction Ignore -ErrorAction Stop -Culture 'en-US';
 
         It 'Azure.VNET.UseNSGs' {
@@ -690,7 +688,7 @@ Describe 'Azure.NSG' -Tag 'Network', 'NSG' {
         $templatePath = Join-Path -Path $here -ChildPath 'Resources.Template.json';
         $parameterPath = Join-Path -Path $here -ChildPath 'Resources.Parameters.json';
         $outputFile = Join-Path -Path $rootPath -ChildPath out/tests/Resources.VirtualNetwork.json;
-        Export-AzTemplateRuleData -TemplateFile $templatePath -ParameterFile $parameterPath -OutputPath $outputFile;
+        Export-AzRuleTemplateData -TemplateFile $templatePath -ParameterFile $parameterPath -OutputPath $outputFile;
         $result = Invoke-PSRule -Module PSRule.Rules.Azure -InputPath $outputFile -Outcome All -WarningAction Ignore -ErrorAction Stop;
 
         It 'Azure.NSG.AnyInboundSource' {
@@ -785,153 +783,6 @@ Describe 'Azure.Firewall' -Tag 'Network', 'Firewall' {
             $ruleResult | Should -Not -BeNullOrEmpty;
             $ruleResult.Length | Should -Be 1;
             $ruleResult.TargetName | Should -BeIn 'firewall-B';
-        }
-    }
-}
-
-Describe 'Azure.FrontDoor' -Tag 'Network', 'FrontDoor' {
-    $dataPath = Join-Path -Path $here -ChildPath 'Resources.FrontDoor.json';
-
-    Context 'Conditions' {
-        $invokeParams = @{
-            Baseline = 'Azure.All'
-            Module = 'PSRule.Rules.Azure'
-            WarningAction = 'Ignore'
-            ErrorAction = 'Stop'
-        }
-        $result = Invoke-PSRule @invokeParams -InputPath $dataPath -Outcome All;
-
-        It 'Azure.FrontDoor.State' {
-            $filteredResult = $result | Where-Object { $_.RuleName -eq 'Azure.FrontDoor.State' };
-
-            # Fail
-            $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Fail' });
-            $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 2;
-            $ruleResult.TargetName | Should -BeIn 'frontdoor-B', 'frontdoor-C';
-
-            # Pass
-            $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Pass' });
-            $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 1;
-            $ruleResult.TargetName | Should -BeIn 'frontdoor-A';
-        }
-
-        It 'Azure.FrontDoor.MinTLS' {
-            $filteredResult = $result | Where-Object { $_.RuleName -eq 'Azure.FrontDoor.MinTLS' };
-
-            # Fail
-            $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Fail' });
-            $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 1;
-            $ruleResult.TargetName | Should -Be 'frontdoor-B';
-
-            # Pass
-            $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Pass' });
-            $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 2;
-            $ruleResult.TargetName | Should -BeIn 'frontdoor-A', 'frontdoor-C';
-        }
-
-        It 'Azure.FrontDoor.Logs' {
-            $filteredResult = $result | Where-Object { $_.RuleName -eq 'Azure.FrontDoor.Logs' };
-
-            # Fail
-            $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Fail' });
-            $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 1;
-            $ruleResult.TargetName | Should -Be 'frontdoor-B';
-
-            # Pass
-            $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Pass' });
-            $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 2;
-            $ruleResult.TargetName | Should -BeIn 'frontdoor-A', 'frontdoor-C';
-        }
-
-        It 'Azure.FrontDoor.UseWAF' {
-            $filteredResult = $result | Where-Object { $_.RuleName -eq 'Azure.FrontDoor.UseWAF' };
-
-            # Fail
-            $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Fail' });
-            $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 1;
-            $ruleResult.TargetName | Should -Be 'frontdoor-B';
-
-            # Pass
-            $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Pass' });
-            $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 2;
-            $ruleResult.TargetName | Should -BeIn 'frontdoor-A', 'frontdoor-C';
-        }
-
-        It 'Azure.FrontDoor.WAF.Mode' {
-            $filteredResult = $result | Where-Object { $_.RuleName -eq 'Azure.FrontDoor.WAF.Mode' };
-
-            # Fail
-            $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Fail' });
-            $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 1;
-            $ruleResult.TargetName | Should -Be 'frontdoor-waf-B';
-
-            # Pass
-            $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Pass' });
-            $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 1;
-            $ruleResult.TargetName | Should -BeIn 'frontdoor-waf-A';
-        }
-
-        It 'Azure.FrontDoor.WAF.Enabled' {
-            $filteredResult = $result | Where-Object { $_.RuleName -eq 'Azure.FrontDoor.WAF.Enabled' };
-
-            # Fail
-            $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Fail' });
-            $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 1;
-            $ruleResult.TargetName | Should -Be 'frontdoor-waf-B';
-
-            # Pass
-            $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Pass' });
-            $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 1;
-            $ruleResult.TargetName | Should -Be 'frontdoor-waf-A';
-        }
-    }
-
-    Context 'With template' {
-        $templatePath = Join-Path -Path $here -ChildPath 'Resources.Template3.json';
-        $outputFile = Join-Path -Path $rootPath -ChildPath out/tests/Resources.FrontDoor.json;
-        Export-AzTemplateRuleData -TemplateFile $templatePath -OutputPath $outputFile;
-        $result = Invoke-PSRule -Module PSRule.Rules.Azure -InputPath $outputFile -Outcome All -WarningAction Ignore -ErrorAction Stop;
-
-        It 'Azure.FrontDoor.State' {
-            $filteredResult = $result | Where-Object { $_.RuleName -eq 'Azure.FrontDoor.State' };
-
-            # Pass
-            $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Pass' });
-            $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 1;
-            $ruleResult.TargetName | Should -BeIn 'frontdoor-A';
-        }
-
-        It 'Azure.FrontDoor.MinTLS' {
-            $filteredResult = $result | Where-Object { $_.RuleName -eq 'Azure.FrontDoor.MinTLS' };
-
-            # Pass
-            $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Pass' });
-            $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 1;
-            $ruleResult.TargetName | Should -BeIn 'frontdoor-A';
-        }
-
-        It 'Azure.FrontDoor.Logs' {
-            $filteredResult = $result | Where-Object { $_.RuleName -eq 'Azure.FrontDoor.Logs' };
-
-            # Pass
-            $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Pass' });
-            $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 1;
-            $ruleResult.TargetName | Should -BeIn 'frontdoor-A';
         }
     }
 }
@@ -1089,7 +940,7 @@ Describe 'Azure.VNG' -Tag 'Network', 'VNG', 'VPN', 'ExpressRoute' {
 
     Context 'With template' {
         $outputFile = Join-Path -Path $rootPath -ChildPath out/tests/Resources.VPN.json;
-        Get-AzRuleTemplateLink -Path $here -InputPath 'Resources.VPN.Parameters.json' | Export-AzTemplateRuleData -OutputPath $outputFile;
+        Get-AzRuleTemplateLink -Path $here -InputPath 'Resources.VPN.Parameters.json' | Export-AzRuleTemplateData -OutputPath $outputFile;
         $result = Invoke-PSRule -Module PSRule.Rules.Azure -InputPath $outputFile -Outcome All -WarningAction Ignore -ErrorAction Stop;
 
         It 'Azure.VNG.VPNLegacySKU' {
@@ -1121,7 +972,7 @@ Describe 'Azure.VNG' -Tag 'Network', 'VNG', 'VPN', 'ExpressRoute' {
         }
 
         $outputFile = Join-Path -Path $rootPath -ChildPath out/tests/Resources.ExpressRoute.json;
-        Get-AzRuleTemplateLink -Path $here -InputPath 'Resources.ExpressRoute.Parameters.json' | Export-AzTemplateRuleData -OutputPath $outputFile;
+        Get-AzRuleTemplateLink -Path $here -InputPath 'Resources.ExpressRoute.Parameters.json' | Export-AzRuleTemplateData -OutputPath $outputFile;
         $result = Invoke-PSRule -Module PSRule.Rules.Azure -InputPath $outputFile -Outcome All -WarningAction Ignore -ErrorAction Stop;
 
         It 'Azure.VNG.ERLegacySKU' {

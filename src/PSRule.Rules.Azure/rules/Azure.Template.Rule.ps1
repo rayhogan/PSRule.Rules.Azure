@@ -74,6 +74,64 @@ Rule 'Azure.Template.UseVariables' -Type 'System.IO.FileInfo','.json' -If { (IsT
     }
 }
 
+# Synopsis: Set the default value for location parameters within ARM template to the default value to `[resourceGroup().location]`.
+Rule 'Azure.Template.LocationDefault' -Type 'System.IO.FileInfo','.json' -If { (HasLocationParameter) } -Tag @{ release = 'GA'; ruleSet = '2021_03' } {
+    $jsonObject = $PSRule.GetContent([System.IO.FileInfo]$TargetObject.FullName);
+    $parameters = @($jsonObject.parameters.PSObject.Properties | Where-Object {
+        $_.Name -eq 'location'
+    });
+    if ($parameters.Length -eq 0) {
+        return $Assert.Pass();
+    }
+    foreach ($parameter in $parameters) {
+        if ($Assert.HasFieldValue($parameter.Value, 'defaultValue', 'global').Result) {
+            $Assert.Pass();
+        }
+        else {
+            $Assert.HasFieldValue($parameter.Value, 'defaultValue', '[resourceGroup().location]');
+        }
+    }
+}
+
+# Synopsis: Set the parameter default value to a value of the same type.
+Rule 'Azure.Template.ParameterDataTypes' -Type 'System.IO.FileInfo','.json' -If { (IsTemplateFile) } -Tag @{ release = 'GA'; ruleSet = '2021_03'; } {
+    $jsonObject = $PSRule.GetContent([System.IO.FileInfo]$TargetObject.FullName);
+    $parameters = @($jsonObject.parameters.PSObject.Properties);
+    if ($parameters.Length -eq 0) {
+        return $Assert.Pass();
+    }
+    foreach ($parameter in $parameters) {
+        if (!$Assert.HasField($parameter.Value, 'defaultValue').Result) {
+            # No defaultValue
+            $Assert.Pass();
+        }
+        elseif ($parameter.Value.defaultValue -is [string] -and $parameter.Value.defaultValue.StartsWith('[') -and $parameter.Value.defaultValue.EndsWith(']')) {
+            # Is function
+            $Assert.Pass();
+        }
+        elseif ($parameter.Value.type -eq 'bool') {
+            Write-Debug -Message "Parameter default value is '$($parameter.Value.defaultValue.GetType().Name)'";
+            $Assert.Create($parameter.Value.defaultValue -is [bool], ($LocalizedData.ParameterDefaultTypeMismatch -f $parameter.Name, $parameter.Value.type));
+        }
+        elseif ($parameter.Value.type -eq 'int') {
+            Write-Debug -Message "Parameter default value is '$($parameter.Value.defaultValue.GetType().Name)'";
+            $Assert.Create($parameter.Value.defaultValue -is [int] -or $parameter.Value.defaultValue -is [long], ($LocalizedData.ParameterDefaultTypeMismatch -f $parameter.Name, $parameter.Value.type));
+        }
+        elseif ($parameter.Value.type -eq 'array') {
+            Write-Debug -Message "Parameter default value is '$($parameter.Value.defaultValue.GetType().Name)'";
+            $Assert.Create($parameter.Value.defaultValue -is [array], ($LocalizedData.ParameterDefaultTypeMismatch -f $parameter.Name, $parameter.Value.type));
+        }
+        elseif ($parameter.Value.type -eq 'string' -or $parameter.Value.type -eq 'secureString') {
+            Write-Debug -Message "Parameter default value is '$($parameter.Value.defaultValue.GetType().Name)'";
+            $Assert.Create($parameter.Value.defaultValue -is [string], ($LocalizedData.ParameterDefaultTypeMismatch -f $parameter.Name, $parameter.Value.type));
+        }
+        elseif ($parameter.Value.type -eq 'object' -or $parameter.Value.type -eq 'secureObject') {
+            Write-Debug -Message "Parameter default value is '$($parameter.Value.defaultValue.GetType().Name)'";
+            $Assert.Create($parameter.Value.defaultValue -is [PSObject], ($LocalizedData.ParameterDefaultTypeMismatch -f $parameter.Name, $parameter.Value.type));
+        }
+    }
+}
+
 #endregion Template
 
 #region Parameters
@@ -102,7 +160,7 @@ function global:IsTemplateFile {
             return $False;
         }
         try {
-            $jsonObject = Get-Content -Path $TargetObject.FullName -Raw -ErrorAction SilentlyContinue | ConvertFrom-Json -ErrorAction SilentlyContinue;
+            $jsonObject = ReadJsonFile -Path $TargetObject.FullName;
             [String]$targetSchema = $jsonObject.'$schema';
             $schemas = @(
                 # Https
@@ -119,7 +177,7 @@ function global:IsTemplateFile {
                 "http://schema.management.azure.com/schemas/2019-08-01/tenantDeploymentTemplate.json`#"
                 "http://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json`#"
             )
-            return $targetSchema -in $schemas -and ([String]::IsNullOrEmpty($Suffix) -or $targetSchema.EndsWith($Suffix));
+            return $targetSchema -in $schemas -and ([String]::IsNullOrEmpty($Suffix) -or $targetSchema.Trim("`#").EndsWith($Suffix));
         }
         catch {
             return $False;
@@ -137,7 +195,7 @@ function global:IsParameterFile {
             return $False;
         }
         try {
-            $jsonObject = Get-Content -Path $TargetObject.FullName -Raw -ErrorAction SilentlyContinue | ConvertFrom-Json -ErrorAction SilentlyContinue;
+            $jsonObject = ReadJsonFile -Path $TargetObject.FullName;
             $schemas = @(
                 # Https
                 "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json`#"
@@ -166,6 +224,18 @@ function global:ReadJsonFile {
     process {
         # return $PSRule.GetContent([System.IO.FileInfo]$Path);
         return Get-Content -Path $TargetObject.FullName -Raw -ErrorAction SilentlyContinue | ConvertFrom-Json -ErrorAction SilentlyContinue;
+    }
+}
+
+function global:HasLocationParameter {
+    [CmdletBinding()]
+    [OutputType([System.Boolean])]
+    param ()
+    process {
+        if (!(IsTemplateFile -Suffix '/deploymentTemplate.json')) {
+            return $False;
+        }
+        return $Assert.HasField((ReadJsonFile -Path $TargetObject.FullName), 'parameters.location').Result;
     }
 }
 

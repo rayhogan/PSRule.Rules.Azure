@@ -8,7 +8,7 @@ The following sections describe key features of PSRule for Azure.
 
 ## Ready to go
 
-PSRule for Azure includes over 100 rules for validating resources against configuration recommendations.
+PSRule for Azure includes over 180 rules for validating resources against configuration recommendations.
 Each rule includes additional information to help remediate issues.
 
 Use the built-in rules to start enforcing release processes quickly.
@@ -30,7 +30,7 @@ Pre-flight validation can be integrated into a continuous integration (CI) pipel
 
 PSRule for Azure provides the following cmdlets that extract data for analysis:
 
-- [Export-AzTemplateRuleData](commands/PSRule.Rules.Azure/en-US/Export-AzTemplateRuleData.md) - Used for pre-flight analysis of one or more ARM templates.
+- [Export-AzRuleTemplateData](commands/PSRule.Rules.Azure/en-US/Export-AzRuleTemplateData.md) - Used for pre-flight analysis of one or more ARM templates.
 - [Export-AzRuleData](commands/PSRule.Rules.Azure/en-US/Export-AzRuleData.md) - Used for in-flight analysis of resources deployed to one or more Azure subscriptions.
 
 ## Cross-platform
@@ -63,7 +63,7 @@ For general FAQ see [PSRule - Frequently Asked Questions (FAQ)][ps-rule-faq], in
 The default built-in _Reader_ role to a subscription is required for:
 
 - Exporting rule data with `Export-AzRuleData`.
-- Exporting rule data from templates with `Export-AzTemplateRuleData` when online features are used.
+- Exporting rule data from templates with `Export-AzRuleTemplateData` when online features are used.
   - Optionally `-ResourceGroupName` and `-Subscription` parameter can be used; these require access _Reader_ access.
 
 ### What permissions do I need to analyze exported data?

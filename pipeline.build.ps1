@@ -34,7 +34,7 @@ if ($Env:SYSTEM_DEBUG -eq 'true') {
     $VerbosePreference = 'Continue';
 }
 
-if ($Env:BUILD_SOURCEBRANCH -like '*/tags/*' -and $Env:BUILD_SOURCEBRANCHNAME -like 'v0.*') {
+if ($Env:BUILD_SOURCEBRANCH -like '*/tags/*' -and $Env:BUILD_SOURCEBRANCHNAME -like 'v1.*') {
     $Build = $Env:BUILD_SOURCEBRANCHNAME.Substring(1);
 }
 
@@ -108,7 +108,7 @@ task VersionModule ModuleDependencies, {
     $manifest = Test-ModuleManifest -Path $manifestPath;
     $requiredModules = $manifest.RequiredModules | ForEach-Object -Process {
         if ($_.Name -eq 'PSRule' -and $Configuration -eq 'Release') {
-            @{ ModuleName = 'PSRule'; ModuleVersion = '0.21.0' }
+            @{ ModuleName = 'PSRule'; ModuleVersion = '1.0.1' }
         }
         else {
             @{ ModuleName = $_.Name; ModuleVersion = $_.Version }
@@ -158,16 +158,16 @@ task PSScriptAnalyzer NuGet, {
 
 # Synopsis: Install PSRule
 task PSRule NuGet, {
-    if ($Null -eq (Get-InstalledModule -Name PSRule -MinimumVersion 1.0.0 -ErrorAction Ignore)) {
-        Install-Module -Name PSRule -Repository PSGallery -MinimumVersion 1.0.0 -Scope CurrentUser -Force;
+    if ($Null -eq (Get-InstalledModule -Name PSRule -MinimumVersion 1.0.1 -ErrorAction Ignore)) {
+        Install-Module -Name PSRule -Repository PSGallery -MinimumVersion 1.0.1 -Scope CurrentUser -Force;
     }
     Import-Module -Name PSRule -Verbose:$False;
 }
 
 # Synopsis: Install PSDocs
 task PSDocs NuGet, {
-    if ($Null -eq (Get-InstalledModule -Name PSDocs -MinimumVersion 0.6.3 -ErrorAction Ignore)) {
-        Install-Module -Name PSDocs -Repository PSGallery -MinimumVersion 0.6.3 -Scope CurrentUser -Force;
+    if ($Null -eq (Get-InstalledModule -Name PSDocs -MinimumVersion 0.7.0 -ErrorAction Ignore)) {
+        Install-Module -Name PSDocs -Repository PSGallery -MinimumVersion 0.7.0 -Scope CurrentUser -Force;
     }
     Import-Module -Name PSDocs -Verbose:$False;
 }
@@ -309,6 +309,9 @@ task Rules PSRule, {
 task Analyze Build, PSScriptAnalyzer, {
     Invoke-ScriptAnalyzer -Path out/modules/PSRule.Rules.Azure;
 }
+
+# Synopsis: Build documentation
+task BuildDocs BuildRuleDocs, BuildBaselineDocs
 
 # Synopsis: Build table of content for rules
 task BuildRuleDocs Build, PSRule, PSDocs, {

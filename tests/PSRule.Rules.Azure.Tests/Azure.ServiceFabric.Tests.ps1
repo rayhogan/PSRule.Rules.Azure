@@ -2,13 +2,11 @@
 # Licensed under the MIT License.
 
 #
-# Unit tests for Azure Policy rules
+# Unit tests for Azure Service Fabric rules
 #
 
 [CmdletBinding()]
-param (
-
-)
+param ()
 
 # Setup error handling
 $ErrorActionPreference = 'Stop';
@@ -23,8 +21,8 @@ $rootPath = $PWD;
 Import-Module (Join-Path -Path $rootPath -ChildPath out/modules/PSRule.Rules.Azure) -Force;
 $here = (Resolve-Path $PSScriptRoot).Path;
 
-Describe 'Azure.Policy' {
-    $dataPath = Join-Path -Path $here -ChildPath 'Resources.Policy.json';
+Describe 'Azure.ServiceFabric' -Tag 'ServiceFabric' {
+    $dataPath = Join-Path -Path $here -ChildPath 'Resources.ServiceFabric.json';
 
     Context 'Conditions' {
         $invokeParams = @{
@@ -33,40 +31,40 @@ Describe 'Azure.Policy' {
             WarningAction = 'Ignore'
             ErrorAction = 'Stop'
         }
-        $result = Invoke-PSRule @invokeParams -InputPath $dataPath;
+        $result = Invoke-PSRule @invokeParams -InputPath $dataPath -Outcome All;
 
-        It 'Azure.Policy.Descriptors' {
-            $filteredResult = $result | Where-Object { $_.RuleName -eq 'Azure.Policy.Descriptors' };
+        It 'Azure.ServiceFabric.AAD' {
+            $filteredResult = $result | Where-Object { $_.RuleName -eq 'Azure.ServiceFabric.AAD' };
 
             # Fail
             $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Fail' });
             $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 4;
-            $ruleResult.TargetName | Should -BeIn 'initiative-002', 'initiative-003', 'policy-002', 'policy-003';
+            $ruleResult.Length | Should -Be 1;
+            $ruleResult.TargetName | Should -BeIn 'cluster-B';
 
             # Pass
             $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Pass' });
             $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 2;
-            $ruleResult.TargetName | Should -BeIn 'initiative-001', 'policy-001';
+            $ruleResult.Length | Should -Be 1;
+            $ruleResult.TargetName | Should -BeIn 'cluster-A';
         }
     }
 
-    Context 'With Template' {
-        $templatePath = Join-Path -Path $here -ChildPath 'Resources.Policy.Template.json';
-        $parameterPath = Join-Path -Path $here -ChildPath 'Resources.Policy.Parameters.json';
-        $outputFile = Join-Path -Path $rootPath -ChildPath out/tests/Resources.Policy.json;
+    Context 'With template' {
+        $templatePath = Join-Path -Path $here -ChildPath 'Resources.ServiceFabric.Template.json';
+        $parameterPath = Join-Path -Path $here -ChildPath 'Resources.ServiceFabric.Parameters.json';
+        $outputFile = Join-Path -Path $rootPath -ChildPath out/tests/Resources.ServiceFabric.json;
         Export-AzRuleTemplateData -TemplateFile $templatePath -ParameterFile $parameterPath -OutputPath $outputFile;
         $result = Invoke-PSRule -Module PSRule.Rules.Azure -InputPath $outputFile -Outcome All -WarningAction Ignore -ErrorAction Stop;
 
-        It 'Azure.Policy.Descriptors' {
-            $filteredResult = $result | Where-Object { $_.RuleName -eq 'Azure.Policy.Descriptors' };
+        It 'Azure.ServiceFabric.AAD' {
+            $filteredResult = $result | Where-Object { $_.RuleName -eq 'Azure.ServiceFabric.AAD' };
 
             # Pass
             $ruleResult = @($filteredResult | Where-Object { $_.Outcome -eq 'Pass' });
             $ruleResult | Should -Not -BeNullOrEmpty;
-            $ruleResult.Length | Should -Be 4;
-            $ruleResult.TargetName | Should -BeIn 'standards', 'inheritTagPolicy', 'rgRequireTagPolicy', 'rgApplyTagPolicy';
+            $ruleResult.Length | Should -Be 1;
+            $ruleResult.TargetName | Should -BeIn 'cluster-001';
         }
     }
 }
