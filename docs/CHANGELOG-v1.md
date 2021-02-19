@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+## v1.1.0-B2102010 (pre-release)
+
+What's changed since pre-release v1.1.0-B2102001:
+
+- Engineering:
+  - Bump PSRule dependency to v1.0.3. [#648](https://github.com/Microsoft/PSRule.Rules.Azure/issues/648)
+- Bug fixes:
+  - Fixed `Azure.VM.ADE` to limit rule to exports only. [#644](https://github.com/microsoft/PSRule.Rules.Azure/issues/644)
+
+## v1.1.0-B2102001 (pre-release)
+
+What's changed since v1.0.0:
+
+- New rules:
+  - All resources:
+    - Check template parameters are defined. [#631](https://github.com/microsoft/PSRule.Rules.Azure/issues/631)
+    - Check location parameter is type string. [#632](https://github.com/microsoft/PSRule.Rules.Azure/issues/632)
+    - Check template parameter `minValue` and `maxValue` constraints are valid. [#637](https://github.com/microsoft/PSRule.Rules.Azure/issues/637)
+    - Check template resources do not use hard coded locations. [#633](https://github.com/microsoft/PSRule.Rules.Azure/issues/633)
+    - Check resource group location not referenced instead of location parameter. [#634](https://github.com/microsoft/PSRule.Rules.Azure/issues/634)
+    - Check increased debug detail is disabled for nested deployments. [#638](https://github.com/microsoft/PSRule.Rules.Azure/issues/638)
+- Engineering:
+  - Bump PSRule dependency to v1.0.2. [#635](https://github.com/Microsoft/PSRule.Rules.Azure/issues/635)
+
 ## v1.0.0
 
 What's changed since v0.19.0:
