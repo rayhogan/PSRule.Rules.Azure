@@ -70,6 +70,15 @@ namespace PSRule.Rules.Azure.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The argument &apos;{0}&apos; for &apos;{1}&apos; is not a valid boolean..
+        /// </summary>
+        internal static string ArgumentInvalidBoolean {
+            get {
+                return ResourceManager.GetString("ArgumentInvalidBoolean", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The argument &apos;{0}&apos; for &apos;{1}&apos; is not a valid integer..
         /// </summary>
         internal static string ArgumentInvalidInteger {
@@ -102,6 +111,15 @@ namespace PSRule.Rules.Azure.Resources {
         internal static string ArgumentsOutOfRange {
             get {
                 return ResourceManager.GetString("ArgumentsOutOfRange", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An error occured evaluating expression &apos;{0}&apos; line {1}. {2}.
+        /// </summary>
+        internal static string ExpressionEvaluateError {
+            get {
+                return ResourceManager.GetString("ExpressionEvaluateError", resourceCulture);
             }
         }
         

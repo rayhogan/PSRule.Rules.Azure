@@ -2,6 +2,38 @@
 
 ## Unreleased
 
+## v1.1.0-B2102034 (pre-release)
+
+What's changed since pre-release v1.1.0-B2102023:
+
+- General improvements:
+  - Added support for matching template by name. [#661](https://github.com/microsoft/PSRule.Rules.Azure/issues/661)
+    - `Get-AzRuleTemplateLink` discovers `<templateName>.json` from `<templateName>.parameters.json`.
+- Bug fixes:
+  - Fixed copy loop value does not fall within the expected range. [#664](https://github.com/microsoft/PSRule.Rules.Azure/issues/664)
+  - Fixed template comparison functions handling of large integer values. [#666](https://github.com/microsoft/PSRule.Rules.Azure/issues/666)
+  - Fixed handling of `createArray` function with no arguments. [#667](https://github.com/microsoft/PSRule.Rules.Azure/issues/667)
+
+## v1.1.0-B2102023 (pre-release)
+
+What's changed since pre-release v1.1.0-B2102015:
+
+- New features:
+  - Exporting template with `Export-AzRuleTemplateData` supports custom resource group and subscription. [#651](https://github.com/microsoft/PSRule.Rules.Azure/issues/651)
+    - Subscription and resource group used for deployment can be specified instead of using defaults.
+    - `ResourceGroupName` parameter of `Export-AzRuleTemplateData` has been renamed to `ResourceGroup`.
+    - Added a parameter alias for `ResourceGroupName` on `Export-AzRuleTemplateData`.
+
+## v1.1.0-B2102015 (pre-release)
+
+What's changed since pre-release v1.1.0-B2102010:
+
+- Bug fixes:
+  - Fixed `if` condition values evaluation order. [#652](https://github.com/microsoft/PSRule.Rules.Azure/issues/652)
+  - Fixed handling of `int` parameters with large values. [#653](https://github.com/microsoft/PSRule.Rules.Azure/issues/653)
+  - Fixed handling of expressions split over multiple lines. [#654](https://github.com/microsoft/PSRule.Rules.Azure/issues/654)
+  - Fixed handling of bool parameter values within logical expressions. [#655](https://github.com/microsoft/PSRule.Rules.Azure/issues/655)
+
 ## v1.1.0-B2102010 (pre-release)
 
 What's changed since pre-release v1.1.0-B2102001:

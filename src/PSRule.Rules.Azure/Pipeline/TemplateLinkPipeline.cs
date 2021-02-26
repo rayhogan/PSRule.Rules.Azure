@@ -37,7 +37,7 @@ namespace PSRule.Rules.Azure.Pipeline
 
         public override IPipeline Build()
         {
-            return new TemplateLinkPipeline(PrepareContext(), PrepareWriter(), _BasePath, _SkipUnlinked);
+            return new TemplateLinkPipeline(PrepareContext(), _BasePath, _SkipUnlinked);
         }
     }
 
@@ -51,16 +51,20 @@ namespace PSRule.Rules.Azure.Pipeline
 
         private const string DEFAULT_TEMPLATESEARCH_PATTERN = "*.parameters.json";
 
+        private const string PARAMETER_FILE_SUFFIX = ".parameters.json";
+
+        private const char SLASH = '/';
+
         private readonly string _BasePath;
         private readonly bool _SkipUnlinked;
         private readonly PathBuilder _PathBuilder;
 
-        internal TemplateLinkPipeline(PipelineContext context, PipelineWriter writer, string basePath, bool skipUnlinked)
-            : base(context, writer)
+        internal TemplateLinkPipeline(PipelineContext context, string basePath, bool skipUnlinked)
+            : base(context)
         {
             _BasePath = PSRuleOption.GetRootedBasePath(basePath);
             _SkipUnlinked = skipUnlinked;
-            _PathBuilder = new PathBuilder(writer, basePath, DEFAULT_TEMPLATESEARCH_PATTERN);
+            _PathBuilder = new PathBuilder(context.Writer, basePath, DEFAULT_TEMPLATESEARCH_PATTERN);
         }
 
         public override void Process(PSObject sourceObject)
@@ -81,11 +85,17 @@ namespace PSRule.Rules.Azure.Pipeline
                 var rootedParameterFile = PSRuleOption.GetRootedPath(parameterFile);
 
                 // Check if metadata property exists
-                if (!TryMetadata(rootedParameterFile, out JObject metadata))
-                    return;
+                string templateFile = null;
+                if (!((TryMetadata(rootedParameterFile, out JObject metadata) && TryTemplateFile(metadata, rootedParameterFile, out templateFile)) || TryTemplateByName(parameterFile, out templateFile)))
+                {
+                    if (metadata == null && !_SkipUnlinked)
+                        throw new InvalidTemplateLinkException(string.Format(CultureInfo.CurrentCulture, PSRuleResources.MetadataNotFound, parameterFile));
 
-                if (!TryTemplateFile(metadata, rootedParameterFile, out string templateFile))
+                    if (templateFile == null && !_SkipUnlinked)
+                        throw new InvalidTemplateLinkException(string.Format(CultureInfo.CurrentCulture, PSRuleResources.TemplateLinkNotFound, parameterFile));
+
                     return;
+                }
 
                 var templateLink = new TemplateLink(templateFile, rootedParameterFile);
 
@@ -96,19 +106,19 @@ namespace PSRule.Rules.Azure.Pipeline
                 if (TryStringProperty(metadata, PROPERTYNAME_DESCRIPTION, out string description))
                     templateLink.Description = description;
 
-                Writer.WriteObject(templateLink, false);
+                Context.Writer.WriteObject(templateLink, false);
             }
             catch (InvalidOperationException ex)
             {
-                Writer.WriteError(ex, nameof(InvalidOperationException), ErrorCategory.InvalidOperation, parameterFile);
+                Context.Writer.WriteError(ex, nameof(InvalidOperationException), ErrorCategory.InvalidOperation, parameterFile);
             }
             catch (FileNotFoundException ex)
             {
-                Writer.WriteError(ex, nameof(FileNotFoundException), ErrorCategory.ObjectNotFound, parameterFile);
+                Context.Writer.WriteError(ex, nameof(FileNotFoundException), ErrorCategory.ObjectNotFound, parameterFile);
             }
             catch (PipelineException ex)
             {
-                Writer.WriteError(ex, nameof(PipelineException), ErrorCategory.WriteError, parameterFile);
+                Context.Writer.WriteError(ex, nameof(PipelineException), ErrorCategory.WriteError, parameterFile);
             }
         }
 
@@ -175,23 +185,19 @@ namespace PSRule.Rules.Azure.Pipeline
                 metadata = property;
                 return true;
             }
-            Writer.VerboseMetadataNotFound(parameterFile);
-            if (!_SkipUnlinked)
-                throw new InvalidTemplateLinkException(string.Format(CultureInfo.CurrentCulture, PSRuleResources.MetadataNotFound, parameterFile));
-
+            Context.Writer.VerboseMetadataNotFound(parameterFile);
             return false;
         }
 
         private bool TryTemplateFile(JObject metadata, string parameterFile, out string templateFile)
         {
-            if (!(TryStringProperty(metadata, PROPERTYNAME_TEMPLATE, out templateFile)))
+            if (!TryStringProperty(metadata, PROPERTYNAME_TEMPLATE, out templateFile))
             {
                 if (_SkipUnlinked)
                 {
-                    Writer.VerboseTemplateLinkNotFound(parameterFile);
-                    return false;
+                    Context.Writer.VerboseTemplateLinkNotFound(parameterFile);
                 }
-                else throw new InvalidTemplateLinkException(string.Format(CultureInfo.CurrentCulture, PSRuleResources.TemplateLinkNotFound, parameterFile));
+                return false;
             }
 
             templateFile = TrimSlash(templateFile);
@@ -204,7 +210,7 @@ namespace PSRule.Rules.Azure.Pipeline
 
             if (!File.Exists(templateFile))
             {
-                Writer.VerboseTemplateFileNotFound(templateFile);
+                Context.Writer.VerboseTemplateFileNotFound(templateFile);
                 throw new FileNotFoundException(
                     string.Format(CultureInfo.CurrentCulture, PSRuleResources.TemplateFileReferenceNotFound, parameterFile),
                     new FileNotFoundException(string.Format(CultureInfo.CurrentCulture, PSRuleResources.TemplateFileNotFound, templateFile))
@@ -213,10 +219,26 @@ namespace PSRule.Rules.Azure.Pipeline
             return true;
         }
 
+        /// <summary>
+        /// Try to match using templateName.parameters.json.
+        /// </summary>
+        private static bool TryTemplateByName(string parameterFile, out string templateFile)
+        {
+            templateFile = null;
+            var parentPath = Path.GetDirectoryName(parameterFile);
+            var parameterPrefix = Path.GetFileName(parameterFile);
+            if (string.IsNullOrEmpty(parameterPrefix) || string.IsNullOrEmpty(parentPath) || parameterPrefix.Length <= 16 || !parameterPrefix.EndsWith(PARAMETER_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            parameterPrefix = parameterPrefix.Remove(parameterPrefix.Length - 16, 11);
+            templateFile = Path.Combine(parentPath, parameterPrefix);
+            return File.Exists(templateFile);
+        }
+
         private static bool TryStringProperty(JObject o, string propertyName, out string value)
         {
             value = null;
-            return o.TryGetValue(propertyName, out JToken token) && TryString(token, out value);
+            return o != null && o.TryGetValue(propertyName, out JToken token) && TryString(token, out value);
         }
 
         private static bool TryString(JToken token, out string value)
@@ -236,7 +258,7 @@ namespace PSRule.Rules.Azure.Pipeline
 
         private static string TrimSlash(string path)
         {
-            return string.IsNullOrEmpty(path) || path[0] != '/' ? path : path.TrimStart('/');
+            return string.IsNullOrEmpty(path) || path[0] != SLASH ? path : path.TrimStart(SLASH);
         }
     }
 }

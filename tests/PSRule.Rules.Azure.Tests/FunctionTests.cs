@@ -3,6 +3,7 @@
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PSRule.Rules.Azure.Configuration;
 using PSRule.Rules.Azure.Data.Template;
 using System;
 using System.Globalization;
@@ -105,14 +106,15 @@ namespace PSRule.Rules.Azure
             var actual1 = Functions.CreateArray(context, new object[] { 1, 2, 3 }) as JArray;
             var actual2 = Functions.CreateArray(context, new object[] { "efgh" }) as JArray;
             var actual3 = Functions.CreateArray(context, new object[] { JObject.Parse("{ \"a\": \"b\", \"c\": \"d\" }"), JObject.Parse("{ \"e\": \"f\", \"g\": \"h\" }") }) as JArray;
+            var actual4 = Functions.CreateArray(context, null) as JArray;
+            var actual5 = Functions.CreateArray(context, new object[] { }) as JArray;
             Assert.Equal(3, actual1.Count);
             Assert.Equal(1, actual1[0]);
             Assert.Equal("efgh", actual2[0]);
             Assert.Equal("b", actual3[0]["a"]);
             Assert.Equal("h", actual3[1]["g"]);
-
-            Assert.Throws<ExpressionArgumentException>(() => Functions.CreateArray(context, null));
-            Assert.Throws<ExpressionArgumentException>(() => Functions.CreateArray(context, new object[] { }));
+            Assert.Empty(actual4);
+            Assert.Empty(actual5);
         }
 
         [Fact]
@@ -254,15 +256,15 @@ namespace PSRule.Rules.Azure
             var context = GetContext();
 
             // Length arrays
-            var actual1 = (int)Functions.Length(context, new object[] { new string[] { "one", "two", "three" } });
+            var actual1 = (long)Functions.Length(context, new object[] { new string[] { "one", "two", "three" } });
             Assert.Equal(3, actual1);
 
             // Length strings
-            var actual2 = (int)Functions.Length(context, new object[] { "One Two Three" });
+            var actual2 = (long)Functions.Length(context, new object[] { "One Two Three" });
             Assert.Equal(13, actual2);
 
             // Length objects
-            var actual3 = (int)Functions.Length(context, new object[] { new TestLengthObject() });
+            var actual3 = (long)Functions.Length(context, new object[] { new TestLengthObject() });
             Assert.Equal(4, actual3);
 
             Assert.Throws<ExpressionArgumentException>(() => Functions.Length(context, null));
@@ -276,17 +278,17 @@ namespace PSRule.Rules.Azure
             var context = GetContext();
 
             // Integer
-            var actual1 = (int)Functions.Max(context, new object[] { 6, 4, 8, 1, 2 });
-            var actual2 = (int)Functions.Max(context, new object[] { 1, 1, 1 });
-            var actual3 = (int)Functions.Max(context, new object[] { 1 });
+            var actual1 = (long)Functions.Max(context, new object[] { 6, 4, 8, 1, 2 });
+            var actual2 = (long)Functions.Max(context, new object[] { 1, 1, 1 });
+            var actual3 = (long)Functions.Max(context, new object[] { 1 });
             Assert.Equal(8, actual1);
             Assert.Equal(1, actual2);
             Assert.Equal(1, actual3);
 
             // Array
-            var actual4 = (int)Functions.Max(context, new object[] { new JArray(new int[] { 6, 4, 8, 1, 2 }) });
-            var actual5 = (int)Functions.Max(context, new object[] { new JArray(new int[] { 6, 4 }), 8 });
-            var actual6 = (int)Functions.Max(context, new object[] { new JArray(new int[] { 6, 4 }), new JArray(new int[] { 8 }) });
+            var actual4 = (long)Functions.Max(context, new object[] { new JArray(new int[] { 6, 4, 8, 1, 2 }) });
+            var actual5 = (long)Functions.Max(context, new object[] { new JArray(new int[] { 6, 4 }), 8 });
+            var actual6 = (long)Functions.Max(context, new object[] { new JArray(new int[] { 6, 4 }), new JArray(new int[] { 8 }) });
             Assert.Equal(8, actual4);
             Assert.Equal(8, actual5);
             Assert.Equal(8, actual6);
@@ -304,17 +306,17 @@ namespace PSRule.Rules.Azure
             var context = GetContext();
 
             // Integer
-            var actual1 = (int)Functions.Min(context, new object[] { 6, 4, 8, 1, 2 });
-            var actual2 = (int)Functions.Min(context, new object[] { 1, 1, 1 });
-            var actual3 = (int)Functions.Min(context, new object[] { 1 });
+            var actual1 = (long)Functions.Min(context, new object[] { 6, 4, 8, 1, 2 });
+            var actual2 = (long)Functions.Min(context, new object[] { 1, 1, 1 });
+            var actual3 = (long)Functions.Min(context, new object[] { 1 });
             Assert.Equal(1, actual1);
             Assert.Equal(1, actual2);
             Assert.Equal(1, actual3);
 
             // Array
-            var actual4 = (int)Functions.Min(context, new object[] { new JArray(new int[] { 6, 4, 8, 1, 2 }) });
-            var actual5 = (int)Functions.Min(context, new object[] { new JArray(new int[] { 6, 4 }), 8 });
-            var actual6 = (int)Functions.Min(context, new object[] { new JArray(new int[] { 6, 4 }), new JArray(new int[] { 8 }) });
+            var actual4 = (long)Functions.Min(context, new object[] { new JArray(new int[] { 6, 4, 8, 1, 2 }) });
+            var actual5 = (long)Functions.Min(context, new object[] { new JArray(new long[] { 6, 4 }), 8 });
+            var actual6 = (long)Functions.Min(context, new object[] { new JArray(new int[] { 6, 4 }), new JArray(new int[] { 8 }) });
             Assert.Equal(1, actual4);
             Assert.Equal(4, actual5);
             Assert.Equal(4, actual6);
@@ -512,8 +514,8 @@ namespace PSRule.Rules.Azure
         {
             var context = GetContext();
 
-            var actual1 = Functions.ResourceGroup(context, null) as ResourceGroup;
-            Assert.Equal("{{ResourceGroup.Name}}", actual1.Name);
+            var actual1 = Functions.ResourceGroup(context, null) as ResourceGroupOption;
+            Assert.Equal("ps-rule-test-rg", actual1.Name);
         }
 
         [Fact]
@@ -528,11 +530,11 @@ namespace PSRule.Rules.Azure
             var actual4 = Functions.ResourceId(context, new object[] { "Unit.Test/type/subtype", "a", "b" }) as string;
             var actual5 = Functions.ResourceId(context, new object[] { "rg-test", "Unit.Test/type/subtype", "a", "b" }) as string;
             var actual6 = Functions.ResourceId(context, new object[] { "00000000-0000-0000-0000-000000000000", "rg-test", "Unit.Test/type/subtype", "a", "b" }) as string;
-            Assert.Equal("/subscriptions/{{Subscription.SubscriptionId}}/resourceGroups/{{ResourceGroup.Name}}/providers/Unit.Test/type/a", actual1);
-            Assert.Equal("/subscriptions/{{Subscription.SubscriptionId}}/resourceGroups/rg-test/providers/Unit.Test/type/a", actual2);
+            Assert.Equal("/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/ps-rule-test-rg/providers/Unit.Test/type/a", actual1);
+            Assert.Equal("/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/rg-test/providers/Unit.Test/type/a", actual2);
             Assert.Equal("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Unit.Test/type/a", actual3);
-            Assert.Equal("/subscriptions/{{Subscription.SubscriptionId}}/resourceGroups/{{ResourceGroup.Name}}/providers/Unit.Test/type/subtype/a/b", actual4);
-            Assert.Equal("/subscriptions/{{Subscription.SubscriptionId}}/resourceGroups/rg-test/providers/Unit.Test/type/subtype/a/b", actual5);
+            Assert.Equal("/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/ps-rule-test-rg/providers/Unit.Test/type/subtype/a/b", actual4);
+            Assert.Equal("/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/rg-test/providers/Unit.Test/type/subtype/a/b", actual5);
             Assert.Equal("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Unit.Test/type/subtype/a/b", actual6);
 
             Assert.Throws<ExpressionArgumentException>(() => Functions.ResourceId(context, null));
@@ -547,8 +549,11 @@ namespace PSRule.Rules.Azure
         {
             var context = GetContext();
 
-            var actual1 = Functions.Subscription(context, null) as Subscription;
-            Assert.Equal("{{Subscription.Name}}", actual1.DisplayName);
+            var actual1 = Functions.Subscription(context, null) as SubscriptionOption;
+            Assert.Equal("ffffffff-ffff-ffff-ffff-ffffffffffff", actual1.SubscriptionId);
+            Assert.Equal("PSRule Test Subscription", actual1.DisplayName);
+            Assert.Equal("ffffffff-ffff-ffff-ffff-ffffffffffff", actual1.TenantId);
+            Assert.Equal("NotDefined", actual1.State);
         }
 
         [Fact]
@@ -561,9 +566,9 @@ namespace PSRule.Rules.Azure
             var actual2 = Functions.SubscriptionResourceId(context, new object[] { "00000000-0000-0000-0000-000000000000", "Unit.Test/type", "a" }) as string;
             var actual3 = Functions.SubscriptionResourceId(context, new object[] { "Unit.Test/type/subtype", "a", "b" }) as string;
             var actual4 = Functions.SubscriptionResourceId(context, new object[] { "00000000-0000-0000-0000-000000000000", "Unit.Test/type/subtype", "a", "b" }) as string;
-            Assert.Equal("/subscriptions/{{Subscription.SubscriptionId}}/providers/Unit.Test/type/a", actual1);
+            Assert.Equal("/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/providers/Unit.Test/type/a", actual1);
             Assert.Equal("/subscriptions/00000000-0000-0000-0000-000000000000/providers/Unit.Test/type/a", actual2);
-            Assert.Equal("/subscriptions/{{Subscription.SubscriptionId}}/providers/Unit.Test/type/subtype/a/b", actual3);
+            Assert.Equal("/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/providers/Unit.Test/type/subtype/a/b", actual3);
             Assert.Equal("/subscriptions/00000000-0000-0000-0000-000000000000/providers/Unit.Test/type/subtype/a/b", actual4);
 
             Assert.Throws<ExpressionArgumentException>(() => Functions.SubscriptionResourceId(context, null));
@@ -671,7 +676,7 @@ namespace PSRule.Rules.Azure
             // int
             var actual1 = (bool)Functions.Equals(context, new object[] { 1, 2 });
             var actual2 = (bool)Functions.Equals(context, new object[] { 2, 1 });
-            var actual3 = (bool)Functions.Equals(context, new object[] { 1, 1 });
+            var actual3 = (bool)Functions.Equals(context, new object[] { new JValue(1), 1 });
             Assert.False(actual1);
             Assert.False(actual2);
             Assert.True(actual3);
@@ -706,7 +711,7 @@ namespace PSRule.Rules.Azure
             // int
             var actual1 = (bool)Functions.Greater(context, new object[] { 1, 2 });
             var actual2 = (bool)Functions.Greater(context, new object[] { 2, 1 });
-            var actual3 = (bool)Functions.Greater(context, new object[] { 1, 1 });
+            var actual3 = (bool)Functions.Greater(context, new object[] { new JValue(1), 1 });
             Assert.False(actual1);
             Assert.True(actual2);
             Assert.False(actual3);
@@ -714,7 +719,7 @@ namespace PSRule.Rules.Azure
             // string
             var actual4 = (bool)Functions.Greater(context, new object[] { "Test1", "Test2" });
             var actual5 = (bool)Functions.Greater(context, new object[] { "Test2", "Test1" });
-            var actual6 = (bool)Functions.Greater(context, new object[] { "Test1", "Test1" });
+            var actual6 = (bool)Functions.Greater(context, new object[] { new JValue("Test1"), "Test1" });
             Assert.False(actual4);
             Assert.True(actual5);
             Assert.False(actual6);
@@ -729,7 +734,7 @@ namespace PSRule.Rules.Azure
             // int
             var actual1 = (bool)Functions.GreaterOrEquals(context, new object[] { 1, 2 });
             var actual2 = (bool)Functions.GreaterOrEquals(context, new object[] { 2, 1 });
-            var actual3 = (bool)Functions.GreaterOrEquals(context, new object[] { 1, 1 });
+            var actual3 = (bool)Functions.GreaterOrEquals(context, new object[] { new JValue(1), 1 });
             Assert.False(actual1);
             Assert.True(actual2);
             Assert.True(actual3);
@@ -737,7 +742,7 @@ namespace PSRule.Rules.Azure
             // string
             var actual4 = (bool)Functions.GreaterOrEquals(context, new object[] { "Test1", "Test2" });
             var actual5 = (bool)Functions.GreaterOrEquals(context, new object[] { "Test2", "Test1" });
-            var actual6 = (bool)Functions.GreaterOrEquals(context, new object[] { "Test1", "Test1" });
+            var actual6 = (bool)Functions.GreaterOrEquals(context, new object[] { new JValue("Test1"), "Test1" });
             Assert.False(actual4);
             Assert.True(actual5);
             Assert.True(actual6);
@@ -752,7 +757,7 @@ namespace PSRule.Rules.Azure
             // int
             var actual1 = (bool)Functions.Less(context, new object[] { 1, 2 });
             var actual2 = (bool)Functions.Less(context, new object[] { 2, 1 });
-            var actual3 = (bool)Functions.Less(context, new object[] { 1, 1 });
+            var actual3 = (bool)Functions.Less(context, new object[] { new JValue(1), 1 });
             Assert.True(actual1);
             Assert.False(actual2);
             Assert.False(actual3);
@@ -760,7 +765,7 @@ namespace PSRule.Rules.Azure
             // string
             var actual4 = (bool)Functions.Less(context, new object[] { "Test1", "Test2" });
             var actual5 = (bool)Functions.Less(context, new object[] { "Test2", "Test1" });
-            var actual6 = (bool)Functions.Less(context, new object[] { "Test1", "Test1" });
+            var actual6 = (bool)Functions.Less(context, new object[] { new JValue("Test1"), "Test1" });
             Assert.True(actual4);
             Assert.False(actual5);
             Assert.False(actual6);
@@ -775,7 +780,7 @@ namespace PSRule.Rules.Azure
             // int
             var actual1 = (bool)Functions.LessOrEquals(context, new object[] { 1, 2 });
             var actual2 = (bool)Functions.LessOrEquals(context, new object[] { 2, 1 });
-            var actual3 = (bool)Functions.LessOrEquals(context, new object[] { 1, 1 });
+            var actual3 = (bool)Functions.LessOrEquals(context, new object[] { new JValue(1), 1 });
             Assert.True(actual1);
             Assert.False(actual2);
             Assert.True(actual3);
@@ -783,7 +788,7 @@ namespace PSRule.Rules.Azure
             // string
             var actual4 = (bool)Functions.LessOrEquals(context, new object[] { "Test1", "Test2" });
             var actual5 = (bool)Functions.LessOrEquals(context, new object[] { "Test2", "Test1" });
-            var actual6 = (bool)Functions.LessOrEquals(context, new object[] { "Test1", "Test1" });
+            var actual6 = (bool)Functions.LessOrEquals(context, new object[] { new JValue("Test1"), "Test1" });
             Assert.True(actual4);
             Assert.False(actual5);
             Assert.True(actual6);
@@ -842,9 +847,12 @@ namespace PSRule.Rules.Azure
             var actual1 = (bool)Functions.And(context, new object[] { true, true, true });
             var actual2 = (bool)Functions.And(context, new object[] { true, true, false });
             var actual3 = (bool)Functions.And(context, new object[] { false, false });
+            var actual4 = (bool)Functions.And(context, new object[] { new JValue(true), true });
+
             Assert.True(actual1);
             Assert.False(actual2);
             Assert.False(actual3);
+            Assert.True(actual4);
         }
 
         [Fact]
@@ -855,8 +863,14 @@ namespace PSRule.Rules.Azure
 
             var actual1 = (bool)Functions.Bool(context, new object[] { "true" });
             var actual2 = (bool)Functions.Bool(context, new object[] { "false" });
+            var actual3 = (bool)Functions.Bool(context, new object[] { 1 });
+            var actual4 = (bool)Functions.Bool(context, new object[] { 0 });
+            var actual5 = (bool)Functions.Bool(context, new object[] { new JValue(1) });
             Assert.True(actual1);
             Assert.False(actual2);
+            Assert.True(actual3);
+            Assert.False(actual4);
+            Assert.True(actual5);
         }
 
         [Fact]
@@ -881,8 +895,10 @@ namespace PSRule.Rules.Azure
 
             var actual1 = (bool)Functions.If(context, new object[] { true, true, false });
             var actual2 = (bool)Functions.If(context, new object[] { false, true, false });
+            var actual3 = (bool)Functions.If(context, new object[] { new JValue(true), true, false });
             Assert.True(actual1);
             Assert.False(actual2);
+            Assert.True(actual3);
         }
 
         [Fact]
@@ -893,8 +909,10 @@ namespace PSRule.Rules.Azure
 
             var actual1 = (bool)Functions.Not(context, new object[] { true });
             var actual2 = (bool)Functions.Not(context, new object[] { false });
+            var actual3 = (bool)Functions.Not(context, new object[] { new JValue(false) });
             Assert.False(actual1);
             Assert.True(actual2);
+            Assert.True(actual3);
         }
 
         [Fact]
@@ -906,9 +924,11 @@ namespace PSRule.Rules.Azure
             var actual1 = (bool)Functions.Or(context, new object[] { true, true, true });
             var actual2 = (bool)Functions.Or(context, new object[] { true, false });
             var actual3 = (bool)Functions.Or(context, new object[] { false, false, false });
+            var actual4 = (bool)Functions.Or(context, new object[] { new JValue(true), true });
             Assert.True(actual1);
             Assert.True(actual2);
             Assert.False(actual3);
+            Assert.True(actual4);
         }
 
         [Fact]
@@ -936,8 +956,10 @@ namespace PSRule.Rules.Azure
             var context = GetContext();
 
             // Integer
-            var actual1 = (int)Functions.Add(context, new object[] { 5, 3 });
+            var actual1 = (long)Functions.Add(context, new object[] { 5, (long)3 });
+            var actual2 = (long)Functions.Add(context, new object[] { new JValue(5), 3 });
             Assert.Equal(8, actual1);
+            Assert.Equal(8, actual2);
 
             Assert.Throws<ExpressionArgumentException>(() => Functions.Add(context, null));
             Assert.Throws<ExpressionArgumentException>(() => Functions.Add(context, new object[] { 5 }));
@@ -951,8 +973,10 @@ namespace PSRule.Rules.Azure
             var context = GetContext();
 
             // Integer
-            var actual1 = (int)Functions.Div(context, new object[] { 8, 3 });
+            var actual1 = (long)Functions.Div(context, new object[] { 8, (long)3 });
+            var actual2 = (long)Functions.Div(context, new object[] { new JValue(8), 3 });
             Assert.Equal(2, actual1);
+            Assert.Equal(2, actual2);
 
             Assert.Throws<ExpressionArgumentException>(() => Functions.Div(context, null));
             Assert.Throws<ExpressionArgumentException>(() => Functions.Div(context, new object[] { 5 }));
@@ -987,11 +1011,11 @@ namespace PSRule.Rules.Azure
             var context = GetContext();
 
             // Integer
-            var actual1 = (int)Functions.Int(context, new object[] { 4 });
+            var actual1 = (long)Functions.Int(context, new object[] { 4 });
             Assert.Equal(4, actual1);
 
             // String
-            var actual2 = (int)Functions.Int(context, new object[] { "4" });
+            var actual2 = (long)Functions.Int(context, new object[] { "4" });
             Assert.Equal(4, actual2);
 
             Assert.Throws<ExpressionArgumentException>(() => Functions.Int(context, null));
@@ -1006,7 +1030,7 @@ namespace PSRule.Rules.Azure
             var context = GetContext();
 
             // Integer
-            var actual1 = (int)Functions.Mod(context, new object[] { 7, "3" });
+            var actual1 = (long)Functions.Mod(context, new object[] { 7, "3" });
             Assert.Equal(1, actual1);
 
             Assert.Throws<ExpressionArgumentException>(() => Functions.Mod(context, null));
@@ -1023,8 +1047,10 @@ namespace PSRule.Rules.Azure
             var context = GetContext();
 
             // Integer
-            var actual1 = (int)Functions.Mul(context, new object[] { 5, "3" });
+            var actual1 = (long)Functions.Mul(context, new object[] { 5, "3" });
+            var actual2 = (long)Functions.Mul(context, new object[] { new JValue(5), (long)3 });
             Assert.Equal(15, actual1);
+            Assert.Equal(15, actual2);
 
             Assert.Throws<ExpressionArgumentException>(() => Functions.Mul(context, null));
             Assert.Throws<ExpressionArgumentException>(() => Functions.Mul(context, new object[] { 5 }));
@@ -1038,8 +1064,10 @@ namespace PSRule.Rules.Azure
             var context = GetContext();
 
             // Integer
-            var actual1 = (int)Functions.Sub(context, new object[] { 7, 3 });
+            var actual1 = (long)Functions.Sub(context, new object[] { 7, 3 });
+            var actual2 = (long)Functions.Sub(context, new object[] { new JValue(7), 3 });
             Assert.Equal(4, actual1);
+            Assert.Equal(4, actual2);
 
             Assert.Throws<ExpressionArgumentException>(() => Functions.Sub(context, null));
             Assert.Throws<ExpressionArgumentException>(() => Functions.Sub(context, new object[] { 5 }));
@@ -1177,9 +1205,9 @@ namespace PSRule.Rules.Azure
         {
             var context = GetContext();
 
-            var actual1 = (int)Functions.IndexOf(context, new object[] { "test", "t" });
-            var actual2 = (int)Functions.IndexOf(context, new object[] { "abcdef", "CD" });
-            var actual3 = (int)Functions.IndexOf(context, new object[] { "abcdef", "z" });
+            var actual1 = (long)Functions.IndexOf(context, new object[] { "test", "t" });
+            var actual2 = (long)Functions.IndexOf(context, new object[] { "abcdef", "CD" });
+            var actual3 = (long)Functions.IndexOf(context, new object[] { "abcdef", "z" });
             Assert.Equal(0, actual1);
             Assert.Equal(2, actual2);
             Assert.Equal(-1, actual3);
@@ -1195,9 +1223,9 @@ namespace PSRule.Rules.Azure
         {
             var context = GetContext();
 
-            var actual1 = (int)Functions.LastIndexOf(context, new object[] { "test", "t" });
-            var actual2 = (int)Functions.LastIndexOf(context, new object[] { "abcdef", "AB" });
-            var actual3 = (int)Functions.LastIndexOf(context, new object[] { "abcdef", "z" });
+            var actual1 = (long)Functions.LastIndexOf(context, new object[] { "test", "t" });
+            var actual2 = (long)Functions.LastIndexOf(context, new object[] { "abcdef", "AB" });
+            var actual3 = (long)Functions.LastIndexOf(context, new object[] { "abcdef", "z" });
             Assert.Equal(3, actual1);
             Assert.Equal(0, actual2);
             Assert.Equal(-1, actual3);
@@ -1423,8 +1451,8 @@ namespace PSRule.Rules.Azure
         private static TemplateContext GetContext()
         {
             var context = new TemplateContext();
-            context.ResourceGroup = new ResourceGroup();
-            context.Subscription = new Subscription();
+            context.ResourceGroup = ResourceGroupOption.Default;
+            context.Subscription = SubscriptionOption.Default;
             context.Load(JObject.Parse("{ \"parameters\": { \"name\": { \"value\": \"abcdef\" } } }"));
             return context;
         }

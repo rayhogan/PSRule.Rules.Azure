@@ -120,6 +120,9 @@
   <data name="ArgumentFormatInvalid" xml:space="preserve">
     <value>The arguments for '{0}' are not in the expected format or type.</value>
   </data>
+  <data name="ArgumentInvalidBoolean" xml:space="preserve">
+    <value>The argument '{0}' for '{1}' is not a valid boolean.</value>
+  </data>
   <data name="ArgumentInvalidInteger" xml:space="preserve">
     <value>The argument '{0}' for '{1}' is not a valid integer.</value>
   </data>
@@ -131,6 +134,9 @@
   </data>
   <data name="ArgumentsOutOfRange" xml:space="preserve">
     <value>The number of arguments '{1}' is not within the allowed range for '{0}'.</value>
+  </data>
+  <data name="ExpressionEvaluateError" xml:space="preserve">
+    <value>An error occured evaluating expression '{0}' line {1}. {2}</value>
   </data>
   <data name="ExpressionInvalid" xml:space="preserve">
     <value>Failed to parse expression. The expression may not be valid. Expression: "{0}"</value>

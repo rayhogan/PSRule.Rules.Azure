@@ -154,6 +154,9 @@ namespace PSRule.Rules.Azure.Data.Template
         private static object Property(TemplateContext context, ExpressionFnOuter inner, string propertyName)
         {
             var result = inner(context);
+            if (result == null)
+                throw new ExpressionReferenceException(propertyName, string.Format(Thread.CurrentThread.CurrentCulture, PSRuleResources.PropertyNotFound, propertyName));
+
             if (result is JObject jObject)
             {
                 var property = jObject.Property(propertyName, StringComparison.OrdinalIgnoreCase);
@@ -226,11 +229,13 @@ namespace PSRule.Rules.Azure.Data.Template
     internal sealed class FunctionDescriptor : IFunctionDescriptor
     {
         private readonly ExpressionFn Fn;
+        private readonly bool DelayBinding;
 
-        public FunctionDescriptor(string name, ExpressionFn fn)
+        public FunctionDescriptor(string name, ExpressionFn fn, bool delayBinding = false)
         {
             Name = name;
             Fn = fn;
+            DelayBinding = delayBinding;
         }
 
         public string Name { get; }
@@ -239,7 +244,7 @@ namespace PSRule.Rules.Azure.Data.Template
         {
             var parameters = new object[args.Length];
             for (var i = 0; i < args.Length; i++)
-                parameters[i] = args[i](context);
+                parameters[i] = DelayBinding ? args[i] : args[i](context);
 
             return Fn(context, parameters);
         }

@@ -79,6 +79,7 @@ namespace PSRule.Rules.Azure.Pipeline
                 return this;
 
             Option.Output = new OutputOption(option.Output);
+            Option.Configuration = new ConfigurationOption(option.Configuration);
             return this;
         }
 
@@ -86,7 +87,7 @@ namespace PSRule.Rules.Azure.Pipeline
 
         protected PipelineContext PrepareContext()
         {
-            return new PipelineContext(Option);
+            return new PipelineContext(Option, PrepareWriter());
         }
 
         protected virtual PipelineWriter PrepareWriter()
@@ -106,16 +107,14 @@ namespace PSRule.Rules.Azure.Pipeline
     internal abstract class PipelineBase : IDisposable, IPipeline
     {
         protected readonly PipelineContext Context;
-        protected readonly PipelineWriter Writer;
 
         // Track whether Dispose has been called.
         private bool _Disposed = false;
         
 
-        protected PipelineBase(PipelineContext context, PipelineWriter writer)
+        protected PipelineBase(PipelineContext context)
         {
             Context = context;
-            Writer = writer;
         }
 
         #region IPipeline
@@ -132,7 +131,7 @@ namespace PSRule.Rules.Azure.Pipeline
 
         public virtual void End()
         {
-            Writer.End();
+            Context.Writer.End();
         }
 
         #endregion IPipeline
